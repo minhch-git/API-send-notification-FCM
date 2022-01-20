@@ -23,7 +23,7 @@ app.get('/', (req, res) => {
 		},
 	}
 	firebaseAdmin.messaging().sendToDevice(firebaseToken, payload)
-	res.send('Send message successful!')
+	res.status(200).json('successful message sent!')
 })
 
 app.listen(8888, () => console.log('Server runing at port 8888'))
