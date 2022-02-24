@@ -1,29 +1,41 @@
 const express = require('express')
-const firebaseAdmin = require('firebase-admin')
+var admin = require('firebase-admin')
+
 var serviceAccount = require('./privateKey.json')
 
-const firebaseToken =
-	'cSI8GJ2ISn6tId34wuCCQq:APA91bHBbhhjajlQMTjmzooHk0y0D7DYNWG0Q7_CkxKJw5DsNS8eqEIw39LUH36Md849nqZeYdUpWNoow3exgFZYe06tXxTv3aKvG4tXDvdRcDkriCxgW6V_RleHvHa7Z03XC6rTIqEY'
-
-firebaseAdmin.initializeApp({
-	credential: firebaseAdmin.credential.cert(serviceAccount),
+admin.initializeApp({
+  credential: admin.credential.cert(serviceAccount),
 })
 
 const app = express()
 
-app.get('/', (req, res) => {
-	const payload = {
-		notification: {
-			title: 'Notification title',
-			body: 'Hello firebase admin',
-			click_action: 'FLUTTER_NOTIFICATION_CLICK',
-		},
-		data: {
-			data: ' 1. Lorem ipsum dolor sit.',
-		},
-	}
-	firebaseAdmin.messaging().sendToDevice(firebaseToken, payload)
-	res.status(200).json('successful message sent!')
+// body parser
+app.use(express.json())
+
+// parse urlencoded request body
+app.use(express.urlencoded({ extended: true }))
+
+app.post('/firebase/notification', (req, res) => {
+  const token = req.body.token
+
+  const message = {
+    notification: {
+      title: req.body.title,
+      body: req.body.body,
+    },
+  }
+
+  const options = {
+    priority: 'high',
+    timeToLive: 60 * 60 * 24,
+  }
+
+  try {
+    await admin.messaging().sendToDevice(token, message, options)
+    res.status(200).json('successful message sent!')
+  } catch (error) {
+    console.log({ error })
+  }
 })
 
 app.listen(8888, () => console.log('Server runing at port 8888'))
